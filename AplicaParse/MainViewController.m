@@ -12,32 +12,14 @@
 #import "mainCell.h"
 #import "Data.h"
 #import "XMLParser.h"
+#import "MWPhotoBrowser.h"
 
 #import "Things.h"
 #import "PhotoViewController.h"
 
-@interface MainViewController ()
-{
-    NSMutableArray *thingsArray; //main array
-    NSMutableArray *filteredStrings; //filtred array
-    UITableView *mainTable; //main table
-    int cellHeight; //height of cell
-    NSOperationQueue *myQueue; //main que
-    int numrows; //numrows visible at the first moment' (while we dont scrolling bottom)
-    int numRowsLoadToBottom; //numrows that we UPload when we are in the bottom
-    
-    //for wait while data is loading
-    UIActivityIndicatorView *indicator;
-    UILabel *hideLabel;
-    
-    //for search
-    UISearchBar *searchBar;
-    BOOL isFiltered;
-}
-@property (weak, nonatomic) IBOutlet UISearchBar *searchBar;
-@end
 
 @implementation MainViewController
+@synthesize photos = _photos;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -353,12 +335,24 @@
         data = [filteredStrings objectAtIndex:indexPath.row];
     }
     
-    if (data.filesBig!=nil)
-    {
-        PVC.images = [NSKeyedUnarchiver unarchiveObjectWithData:data.filesBig];
-        [self.navigationController pushViewController:PVC animated:YES];
+    //MWPhotoBrowser - Photo Pagination
+    NSMutableArray *images = [NSKeyedUnarchiver unarchiveObjectWithData:data.filesBig];
+    NSMutableArray *phot = [[NSMutableArray alloc] init];
+    MWPhoto *photo;
+    
+    for (int i=0; i < [images count]; i++) {
+        photo = [MWPhoto photoWithImage:[UIImage imageWithData:[images objectAtIndex:i]]];
+        [phot addObject:photo];
     }
+    
+    self.photos = phot;
+    MWPhotoBrowser *browser = [[MWPhotoBrowser alloc] initWithDelegate:self];
+    browser.displayActionButton = YES;
+    
+    [self.navigationController pushViewController:browser animated:YES];
+    
 }
+
 
 -(void)viewWillDisappear:(BOOL)animated {
     NSIndexPath *selectedIndexPath = [mainTable indexPathForSelectedRow];
@@ -427,6 +421,18 @@
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - MWPhotoBrowserDelegate
+
+- (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser {
+    return _photos.count;
+}
+
+- (MWPhoto *)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index {
+    if (index < _photos.count)
+        return [_photos objectAtIndex:index];
+    return nil;
 }
 
 @end
