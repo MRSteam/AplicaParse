@@ -6,7 +6,6 @@
 3.
 mainCell - ячейка для uitableview
 MainViewController - основной экран вывода записей
-PhotoViewController - просмотр фотографий по клику на ячейку в MainViewController
 Data - для CoreData
 Things и XMLParser - собственно для парсинга файла
  
