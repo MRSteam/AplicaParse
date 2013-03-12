@@ -16,7 +16,7 @@
 
 - (XMLParser *) initXMLParser {
     //[super init];
-    // init array of user objects
+    // init array of things objects
     things = [[NSMutableArray alloc] init];
     files = [[NSMutableArray alloc] init];
     return self;
@@ -29,19 +29,17 @@ didStartElement:(NSString *)elementName
     attributes:(NSDictionary *)attributeDict {
 	
     if ([elementName isEqualToString:@"body"]) {
-        NSLog(@"body element found");
+        //NSLog(@"body element found");
         thing = [[Things alloc] init];
         files = [[NSMutableArray alloc] init];
         filesBig = [[NSMutableArray alloc] init];
-        //We do not have any attributes in the user elements, but if
-        // you do, you can extract them here:
-        // user.att = [[attributeDict objectForKey:@"<att name>"] ...];
     }
     
     if ([elementName isEqualToString:@"image"]) {
-        if (([[attributeDict valueForKey:@"height"] isEqualToString:@"56"]) && ([[attributeDict valueForKey:@"width"] isEqualToString:@"56"]))
+        if (([[attributeDict valueForKey:@"height"] isEqualToString:@"77"]) && ([[attributeDict valueForKey:@"width"] isEqualToString:@"103"]))
         {
-            NSLog(@"url %@",[attributeDict valueForKey:@"url"]);
+            //small image
+            //NSLog(@"url %@",[attributeDict valueForKey:@"url"]);
             [files addObject:[attributeDict valueForKey:@"url"]];
         }
         //last image - big size
@@ -68,6 +66,7 @@ didStartElement:(NSString *)elementName
   namespaceURI:(NSString *)namespaceURI
  qualifiedName:(NSString *)qName {
     
+    //format string from xml
     NSString *theString = currentElementValue;
     NSCharacterSet *whitespaces = [NSCharacterSet whitespaceCharacterSet];
     NSPredicate *noEnterStrings = [NSPredicate predicateWithFormat:@"SELF != '\\n'"];
@@ -78,39 +77,30 @@ didStartElement:(NSString *)elementName
     theString = [filteredArray componentsJoinedByString:@" "];
     
     if ([elementName isEqualToString:@"name"]) {
-        // We are done with user entry – add the parsed user
-        // object to our user array
         thing.name = theString;
     }
     
     if ([elementName isEqualToString:@"text"]) {
-        // We are done with user entry – add the parsed user
-        // object to our user array
         thing.text = theString;
     }
     
     if ([elementName isEqualToString:@"photo"]) {
-        // We are done with user entry – add the parsed user
-        // object to our user array
         thing.photo = theString;
     }
     
     if ([elementName isEqualToString:@"value"]) {
-        // We are done with user entry – add the parsed user
-        // object to our user array
         thing.price = theString;
     }
     
     if ([elementName isEqualToString:@"images"]) {
-        // We are done with user entry – add the parsed user
-        // object to our user array
         [filesBig addObject:searchLastFile];
     }
     
     if ([elementName isEqualToString:@"body"]) {
         if (thing!=nil)
         {
-            NSLog(@"! %@", [files objectAtIndex:0]);
+            //thing number X parsed, added ro things
+            //NSLog(@"! %@", [files objectAtIndex:0]);
             thing.files = files;
             thing.filesBig = filesBig;
             [things addObject:thing];

@@ -7,15 +7,16 @@
 //
 
 #import "AppDelegate.h"
+
 #import "MainViewController.h"
 #import <QuartzCore/QuartzCore.h> 
 #import "mainCell.h"
 #import "Data.h"
-#import "XMLParser.h"
-#import "MWPhotoBrowser.h"
 
+#import "XMLParser.h"
 #import "Things.h"
-#import "PhotoViewController.h"
+
+#import "MWPhotoBrowser.h"
 
 
 @implementation MainViewController
@@ -43,6 +44,7 @@
     numrows = 10;
     numRowsLoadToBottom = 5;
     
+    //initialize indicator and the gray-black label
     indicator = [[UIActivityIndicatorView alloc]
                initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
     indicator.center = CGPointMake(160, 195);
@@ -57,12 +59,32 @@
     
     [self.view addSubview:indicator];
     [indicator startAnimating];
+    
+    
     [self performSelector:@selector(dataLoading) withObject:self afterDelay:0];
 }
 
+-(void)dataLoading
+{
+    //test on Data
+    [self getDataFromCoreData];
+    
+    if ([thingsArray count]==0)
+    {
+        //if CoreData is empty then loading data from server
+        [self parseXml]; //load and parse data
+        [self loadImages]; //load images
+    }
+    [self createTable]; //init table and searchbar
+    
+    hideLabel.hidden=YES;
+    [indicator stopAnimating];
+}
+
+
 -(void) createTable
 {
-    //create table and searhbar
+    //create table and searchbar
     UIColor *bgColor = [UIColor colorWithRed:0.9686 green:0.9686 blue:0.9686 alpha:1];
     
     mainTable = [[UITableView alloc] initWithFrame:CGRectMake(0, 44, 320, 415-44)];
@@ -70,14 +92,11 @@
     mainTable.delegate = self;
     mainTable.dataSource = self;
     mainTable.backgroundColor = bgColor;
-    
     [self.view addSubview:mainTable];
     
-    searchBar = [[UISearchBar alloc] init];
     searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0,0,320,44)];
-    searchBar.delegate=self;
+    searchBar.delegate = self;
     [self.view addSubview:searchBar];
-    
 }
 
 -(void)getDataFromCoreData
@@ -93,23 +112,6 @@
     
     if ([thingsArray count] < 10) numrows = [thingsArray count];
     else numrows = 10;
-}
-
--(void)dataLoading
-{
-    //test on Data
-    [self getDataFromCoreData];
-    
-    if ([thingsArray count]==0)
-    {
-
-        [self parseXml]; //load and parse data
-        [self loadImages]; //load images
-        
-    }
-    [self createTable]; //init table
-    hideLabel.hidden=YES;
-    [indicator stopAnimating];
 }
 
 -(void)parseXml
@@ -217,6 +219,8 @@
         }
         [myQueue waitUntilAllOperationsAreFinished];
         data.filesBig = [NSKeyedArchiver archivedDataWithRootObject:newFiles];
+        
+        //save context
         [appDelegate saveContext];
     }
 }
@@ -251,7 +255,6 @@
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     
-    
     Data *data;
     if (!isFiltered)
     {
@@ -264,7 +267,6 @@
     
     cell.nameLabel.text = data.name;
     cell.priceLabel.text = [data.price stringByAppendingString: @" руб."];
-    cell.photoImageView.image = [UIImage imageNamed:@"Default.png"];
     NSMutableArray *array = [NSKeyedUnarchiver unarchiveObjectWithData:data.files];
     cell.photoImageView.image = [UIImage imageWithData:[array objectAtIndex:arc4random() % ([array count])]];
     cell.numPhotoLabel.text = [NSString stringWithFormat:@"%d фото",[[NSKeyedUnarchiver unarchiveObjectWithData:data.filesBig] count]];
@@ -274,25 +276,25 @@
 }
 
 
+//function for UPload records after last record when we are in the bottom
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
+    //offset = we UPload new records when we scrolled <end-4records>
     if (mainTable.contentOffset.y>=cellHeight*(numrows-4)) {
     //NSLog(@"Did Scroll %f", mainTable.contentOffset.y);
         
     [mainTable beginUpdates];
     
-    NSMutableArray *indexArray = [[NSMutableArray alloc] init];
+    NSMutableArray *indexArray = [[NSMutableArray alloc] init]; //new rows
     
-    int count;
-        
+    int count; // count of all records
     if (isFiltered) count = [filteredStrings count];
     else count = [thingsArray count];
             
-    int i=-1;
-        
-    
+    int i=-1; //iteration
     while (i < numRowsLoadToBottom) {
         i++;
+        //watch for not add NULL row
         if (numrows+i != count)
         {
             NSIndexPath *path = [NSIndexPath indexPathForRow:numrows+i inSection:0];
@@ -307,7 +309,6 @@
         
     numrows=numrows+(i+1);
     [mainTable insertRowsAtIndexPaths:indexArray withRowAnimation:UITableViewRowAnimationRight];
-    // make sure the dataSource will return new rows before calling endUpdates
     [mainTable endUpdates];
     }
 }
@@ -323,7 +324,6 @@
     }
     
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    PhotoViewController *PVC = [[PhotoViewController alloc] initWithNibName:@"PhotoViewController" bundle:nil];
     
     Data *data;
     if (!isFiltered)
@@ -337,20 +337,19 @@
     
     //MWPhotoBrowser - Photo Pagination
     NSMutableArray *images = [NSKeyedUnarchiver unarchiveObjectWithData:data.filesBig];
-    NSMutableArray *phot = [[NSMutableArray alloc] init];
+    NSMutableArray *photos = [[NSMutableArray alloc] init];
     MWPhoto *photo;
     
     for (int i=0; i < [images count]; i++) {
         photo = [MWPhoto photoWithImage:[UIImage imageWithData:[images objectAtIndex:i]]];
-        [phot addObject:photo];
+        [photos addObject:photo];
     }
     
-    self.photos = phot;
+    self.photos = photos;
     MWPhotoBrowser *browser = [[MWPhotoBrowser alloc] initWithDelegate:self];
     browser.displayActionButton = YES;
     
     [self.navigationController pushViewController:browser animated:YES];
-    
 }
 
 
@@ -382,6 +381,8 @@
     [searchBar resignFirstResponder];
     searchBar.text=@"";
     isFiltered = NO;
+    if ([thingsArray count] < 10) numrows = [thingsArray count];
+    else numrows = 10;
     [mainTable reloadData];
 }
 
@@ -396,24 +397,25 @@
         isFiltered = YES;
         filteredStrings = [[NSMutableArray alloc]init];
         
-        NSString *str1;
+        NSString *string; //our string
         NSMutableArray *filteredStringsInArray = [[NSMutableArray alloc] init];
         
         for (int i=0; i<[thingsArray count]; i++) {
             Data *data = [thingsArray objectAtIndex:i];
-            str1 = data.name;
+            string = data.name;
             
-            NSRange stringRange1 = [str1 rangeOfString:searchText options:NSCaseInsensitiveSearch];
+            NSRange stringRange1 = [string rangeOfString:searchText options:NSCaseInsensitiveSearch];
             
             if (stringRange1.location != NSNotFound) {
                 [filteredStrings addObject:data];
             }
         }
+        
         if ([filteredStrings count] < 10) numrows = [filteredStrings count];
         else numrows = 10;
        
     }
-    NSLog(@"NumRows: %d",numrows);
+    //NSLog(@"NumRows: %d",numrows);
     [mainTable reloadData];
 }
 

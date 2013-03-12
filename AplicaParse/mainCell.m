@@ -99,10 +99,10 @@
     frame= CGRectMake(10+100+10,   5+35+5,    180,  60);
     textLabel.frame = frame;
     
-    frame= CGRectMake(10,          5+20,    100,  80);
+    frame= CGRectMake(10,          5+20,    103,  77);
     photoImageView.frame = frame;
     
-    frame= CGRectMake(10+35,       20+30+30, 60,   20);
+    frame= CGRectMake(10+35+5,       20+30+30, 60,   20);
     numPhotoLabel.frame = frame;
 }
 

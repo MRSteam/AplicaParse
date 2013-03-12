@@ -14,9 +14,9 @@
     // an ad hoc string to hold element value
     NSMutableString *currentElementValue;
     int countBody;
-    // user object
+    // thing object
     Things *thing;
-    // array of user objects
+    // array of thing objects
     NSMutableArray *things;
     
     NSMutableArray *files;

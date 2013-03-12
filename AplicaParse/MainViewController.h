@@ -31,9 +31,11 @@
     NSMutableArray *photos;
 }
 
+@property (strong, nonatomic) UIWindow *window;
+
 @property (nonatomic, retain) NSArray *photos;
 @property (weak, nonatomic) IBOutlet UISearchBar *searchBar;
-@property (strong, nonatomic) UIWindow *window;
+
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath;
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section;
